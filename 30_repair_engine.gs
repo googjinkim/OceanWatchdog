@@ -1,7 +1,8 @@
 function attemptRepair(errorDetails) {
   incrementStats(CONFIG.STATS_KEYS.REPAIR_ATTEMPTS);
 
-  var comparison = compareWebhookUrlV2();
+  var beforeInfo = getWebhookInfoV2();
+  var comparison = compareWebhookUrlV2(beforeInfo);
   if (comparison.isMatch) {
     incrementStats(CONFIG.STATS_KEYS.REPAIR_SUCCESS);
     logInfo('Repair skipped', 'Webhook already matches expected URL.');
@@ -23,11 +24,21 @@ function attemptRepair(errorDetails) {
 
   if (recheckHealth.level === 'GOOD' || recheckHealth.level === 'WARNING') {
     incrementStats(CONFIG.STATS_KEYS.REPAIR_SUCCESS);
-    logWarning('Repair succeeded', 'Webhook repaired or stabilized. Health: ' + recheckHealth.level + ' - ' + recheckHealth.reason + ' - ' + errorDetails);
+    logInfo(
+      'Repair succeeded',
+      'Health: ' + recheckHealth.level +
+      ' Expected: ' + recheckComparison.expectedUrl +
+      ' Current: ' + recheckComparison.currentUrl
+    );
     return true;
   }
 
   incrementStats(CONFIG.STATS_KEYS.REPAIR_FAILURE);
-  logError('Repair failed', recheckHealth.reason + ' - ' + errorDetails);
+  logError(
+    'Repair failed',
+    'Expected: ' + recheckComparison.expectedUrl +
+    ' Current: ' + recheckComparison.currentUrl +
+    ' Health reason: ' + recheckHealth.reason
+  );
   return false;
 }
